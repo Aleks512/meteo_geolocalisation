@@ -1,75 +1,60 @@
 import 'package:flutter/material.dart';
-import 'package:meteo_geolocalisation/utilities/constants.dart';
+import 'package:geolocator/geolocator.dart';
 
-class LocationScreen extends StatefulWidget {
+class LoadingScreen extends StatefulWidget {
   @override
-  _LocationScreenState createState() => _LocationScreenState();
+  _LoadingScreenState createState() => _LoadingScreenState();
 }
 
-class _LocationScreenState extends State<LocationScreen> {
+class _LoadingScreenState extends State<LoadingScreen> {
+
+  @override
+  void initState() {
+    super.initState();
+    _checkPermissions();
+  }
+
+  Future<void> _checkPermissions() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    // Vérifiez si les services de localisation sont activés
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      // Les services de localisation ne sont pas activés, pas de demande de permission
+      print('Location services are disabled.');
+      return;
+    }
+
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        // Les permissions sont refusées
+        print('Location permissions are denied');
+        return;
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      // Les permissions sont refusées de manière permanente
+      print('Location permissions are permanently denied, we cannot request permissions.');
+      return;
+    }
+
+    // Lorsque nous arrivons ici, nous avons les permissions nécessaires
+    Position position = await Geolocator.getCurrentPosition();
+    print('Position: ${position.latitude}, ${position.longitude}');
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage('images/location_background.jpg'),
-            fit: BoxFit.cover,
-            colorFilter: ColorFilter.mode(
-                Colors.white.withOpacity(0.8), BlendMode.dstATop),
-          ),
-        ),
-        constraints: BoxConstraints.expand(),
-        child: SafeArea(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: <Widget>[
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: <Widget>[
-                  TextButton(
-                    onPressed: () {},
-                    child: Icon(
-                      Icons.near_me,
-                      size: 50.0,
-                    ),
-                  ),
-                  TextButton(
-                    onPressed: () {},
-                    child: Icon(
-                      Icons.location_city,
-                      size: 50.0,
-                    ),
-                  ),
-                ],
-              ),
-              Padding(
-                padding: EdgeInsets.only(left: 15.0),
-                child: Row(
-                  children: <Widget>[
-                    Text(
-                      '32°',
-                      style: kTempTextStyle,
-                    ),
-                    Text(
-                      '☀️',
-                      style: kConditionTextStyle,
-                    ),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: EdgeInsets.only(right: 15.0),
-                child: Text(
-                  "It's 🍦 time in San Francisco!",
-                  textAlign: TextAlign.right,
-                  style: kMessageTextStyle,
-                ),
-              ),
-            ],
-          ),
-        ),
+      appBar: AppBar(
+        title: Text('Loading Screen'),
+      ),
+      body: Center(
+        child: Text('Checking permissions...'),
       ),
     );
   }
